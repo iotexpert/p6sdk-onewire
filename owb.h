@@ -20,11 +20,15 @@ typedef struct
     bool use_parasitic_power;
     SemaphoreHandle_t signalSemaphore;
     cyhal_timer_t bitTimer;
+    bool detect;
     volatile uint32_t scratchBitValue;
+    cyhal_clock_t bitTimerClock;
+    SemaphoreHandle_t owb_num_active;
+
 } OneWireBus;        
 
 typedef struct {
-    uint8_t romAddr[16];
+    uint8_t romAddr[8];
 
 } OneWireBus_ROMCode;
 
@@ -50,6 +54,9 @@ owb_ret_t owb_read_bytes( OneWireBus *bus, uint8_t *buffer, uint32_t length);
 owb_ret_t owb_crc8_bytes(uint32_t val, uint8_t *buffer, uint32_t length);
 
 void   owb_set_strong_pullup( OneWireBus *bus, bool val);
+
+void testpwm();
+void testprint();
 
 #endif
 
