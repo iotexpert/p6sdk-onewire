@@ -5,10 +5,10 @@
 #include "task.h"
 #include <stdbool.h>
 #include <stdio.h>
+
 #include "log.h"
 
 static bool owb_power_callback(cyhal_syspm_callback_state_t state, cyhal_syspm_callback_mode_t mode, void* callback_arg);
-static  char * TAG = "ds18b20";
 
 owb_ret_t owb_init(OneWireBus *bus)
 {
@@ -140,6 +140,7 @@ owb_ret_t owb_reset(OneWireBus *bus, bool *result)
 
 
 #if 0
+// Bit banged version of the wrote
 owb_ret_t owb_write_bit(OneWireBus *bus,uint8_t val)
 {
     owb_ret_t rval = OWB_STATUS_OK;
@@ -225,6 +226,9 @@ owb_ret_t owb_write_bit(OneWireBus *bus,uint8_t val)
 #endif
 
 #if 0
+
+// This code is a "safer" implementation of write_bit and write_byte
+
 volatile uint8_t bitCount=0;
 volatile uint8_t byteOut=0;
 
@@ -353,6 +357,7 @@ owb_ret_t owb_write_bytes( OneWireBus *bus, uint8_t *buffer, uint32_t length)
 
 
 #if 0
+// The bit-banged version of read bit
 owb_ret_t owb_read_bit( OneWireBus *bus, uint8_t *bit)
 {
     owb_ret_t rval = OWB_STATUS_OK;
@@ -477,7 +482,7 @@ owb_ret_t owb_set_strong_pullup(OneWireBus * bus, bool enable)
         {
             //gpio_set_level(bus->strong_pullup_gpio, enable ? 1 : 0);
             cyhal_gpio_write(bus->strong_pullup_gpio,enable);
-            ESP_LOGD(TAG, "strong pullup GPIO %d", enable);
+            log_debug( "strong pullup GPIO %d", enable);
         }  // else ignore
 
         status = OWB_STATUS_OK;
@@ -542,7 +547,7 @@ owb_ret_t owb_use_strong_pullup_gpio(OneWireBus * bus, cyhal_gpio_t gpio)
         if (gpio != NC) {
             // The strong GPIO pull-up is only activated if parasitic-power mode is enabled
             if (!bus->use_parasitic_power) {
-                ESP_LOGW(TAG, "Strong pull-up GPIO set with parasitic-power disabled");
+                log_warn( "Strong pull-up GPIO set with parasitic-power disabled");
             }
 
             //gpio_pad_select_gpio(gpio);
@@ -556,7 +561,7 @@ owb_ret_t owb_use_strong_pullup_gpio(OneWireBus * bus, cyhal_gpio_t gpio)
         }
 
         bus->strong_pullup_gpio = gpio;
-        ESP_LOGD(TAG, "use_strong_pullup_gpio %d", bus->strong_pullup_gpio);
+        log_debug( "use_strong_pullup_gpio %d", bus->strong_pullup_gpio);
 
         status = OWB_STATUS_OK;
     }
@@ -600,7 +605,7 @@ owb_ret_t owb_read_rom(OneWireBus * bus, OneWireBus_ROMCode * rom_code)
             {
                 if (owb_crc8_bytes(0, rom_code->bytes, sizeof(OneWireBus_ROMCode)) != 0)
                 {
-                  //  ESP_LOGE(TAG, "CRC failed");
+                    log_error( "CRC failed");
                     memset(rom_code->bytes, 0, sizeof(OneWireBus_ROMCode));
                     status = OWB_STATUS_CRC_FAILED;
                 }
@@ -613,14 +618,14 @@ owb_ret_t owb_read_rom(OneWireBus * bus, OneWireBus_ROMCode * rom_code)
             {
                 status = OWB_STATUS_OK;
             }
-            char rom_code_s[sizeof(OneWireBus_ROMCode)];
+            char rom_code_s[sizeof(OneWireBus_ROMCode)*2+2];
             owb_string_from_rom_code(rom_code, rom_code_s, sizeof(rom_code_s));
-       //     ESP_LOGD(TAG, "rom_code %s", rom_code_s);
+            log_debug( "rom_code %s", rom_code_s);
         }
         else
         {
             status = OWB_STATUS_DEVICE_NOT_RESPONDING;
-       //     ESP_LOGE(TAG, "ds18b20 device not responding");
+            log_error( "ds18b20 device not responding");
         }
     }
 
@@ -823,14 +828,14 @@ owb_ret_t owb_verify_rom(OneWireBus * bus, OneWireBus_ROMCode *rom_code, bool * 
             for (int i = 0; i < sizeof(state.rom_code.bytes) && result; ++i)
             {
                 result = rom_code->bytes[i] == state.rom_code.bytes[i];
-                ESP_LOGD(TAG, "%02x %02x", rom_code->bytes[i], state.rom_code.bytes[i]);
+                log_debug( "%02x %02x", rom_code->bytes[i], state.rom_code.bytes[i]);
             }
             is_found = result;
         }
-        ESP_LOGD(TAG, "state.last_discrepancy %d, state.last_device_flag %d, is_found %d",
+        log_debug( "state.last_discrepancy %d, state.last_device_flag %d, is_found %d",
                  state.last_discrepancy, state.last_device_flag, is_found);
 
-        ESP_LOGD(TAG, "rom code %sfound", result ? "" : "not ");
+        log_debug( "rom code %sfound", result ? "" : "not ");
         *is_present = result;
         status = OWB_STATUS_OK;
     }
@@ -889,7 +894,7 @@ static uint8_t _calc_crc_block(uint8_t crc, const uint8_t * buffer, size_t len)
     do
     {
         crc = _calc_crc(crc, *buffer++);
-//        ESP_LOGD(TAG, "buffer 0x%02x, crc 0x%02x, len %d", (uint8_t)*(buffer - 1), (int)crc, (int)len);
+        log_debug( "buffer 0x%02x, crc 0x%02x, len %d", (uint8_t)*(buffer - 1), (int)crc, (int)len);
     }
     while (--len > 0);
     return crc;
@@ -959,8 +964,6 @@ owb_ret_t owb_search_first(OneWireBus * bus, OneWireBus_SearchState * state, boo
 
     return status;
 }
-
-// TODO ARH
 
 /**
  * @brief Locates the next device on the 1-Wire bus, if present, starting from
