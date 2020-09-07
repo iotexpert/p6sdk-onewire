@@ -102,7 +102,7 @@ void reset_timer_event_callback(void *callback_arg, cyhal_timer_event_t event)
  
 }
 
-owb_ret_t owb_reset(OneWireBus *bus, bool *result)
+owb_ret_t owb_reset(OneWireBus *bus, bool *is_present)
 {
     owb_ret_t rval = OWB_STATUS_OK;
 
@@ -128,7 +128,7 @@ owb_ret_t owb_reset(OneWireBus *bus, bool *result)
 
     xSemaphoreTake(bus->signalSemaphore,2); // worst case is really 960uS
 
-    *result=bus->detect;
+    *is_present=bus->detect;
 
     return rval;
 }
@@ -845,12 +845,7 @@ owb_ret_t owb_verify_rom(OneWireBus * bus, OneWireBus_ROMCode *rom_code, bool * 
 
 
 
-/**
- * @brief Write a ROM code to the 1-Wire bus ensuring LSB is sent first.
- * @param[in] bus Pointer to initialised bus instance.
- * @param[in] rom_code ROM code to write to bus.
- * @return status
- */
+
 owb_ret_t owb_write_rom_code( OneWireBus *bus, OneWireBus_ROMCode *romcode)
 {
     owb_ret_t rval = owb_write_bytes(bus,romcode->bytes,sizeof(OneWireBus_ROMCode));
@@ -858,12 +853,6 @@ owb_ret_t owb_write_rom_code( OneWireBus *bus, OneWireBus_ROMCode *romcode)
 }
 
 
-/**
- * @brief 1-Wire 8-bit CRC lookup.
- * @param[in] crc Starting CRC value. Pass in prior CRC to accumulate.
- * @param[in] data Byte to feed into CRC.
- * @return Resultant CRC value.
- */
 static uint8_t _calc_crc(uint8_t crc, uint8_t data)
 {
     // https://www.maximintegrated.com/en/app-notes/index.mvp/id/27

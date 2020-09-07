@@ -67,17 +67,17 @@ typedef enum {
  */
 typedef struct  
 {
-    bool is_init;
-    cyhal_gpio_t  pin;
-    cyhal_gpio_t strong_pullup_gpio;
-    bool use_parasitic_power;
-    bool use_crc;
+    cyhal_gpio_t  pin;                   ///<Pin that the bus is attached to
+    cyhal_gpio_t strong_pullup_gpio;     ///<Pin that the pullup gpio is attached to
+    bool use_parasitic_power;            ///<Driver is using parastic power mode
+    bool use_crc;                        ///<Enable the use of crc checks on the ROM
     // Internal use only
-    bool detect;
-    SemaphoreHandle_t signalSemaphore;
-    cyhal_timer_t bitTimer;
-    SemaphoreHandle_t owb_num_active;
-    uint8_t scratchBitValue;
+    bool is_init;                        ///<Private
+    bool detect;                         ///<Private
+    SemaphoreHandle_t signalSemaphore;   ///<Private
+    cyhal_timer_t bitTimer;              ///<Private
+    SemaphoreHandle_t owb_num_active;    ///<Private
+    uint8_t scratchBitValue;             ///<Private
 } OneWireBus;        
 
 
@@ -133,7 +133,6 @@ typedef enum {
 /**
  * @brief Initialize the one-wire bus structure and hardware.
  * @param[in] bus Pointer to initialised bus instance.
- * @param[out] none
  * @return status
  */    
 owb_ret_t owb_init(OneWireBus *bus);
@@ -144,12 +143,12 @@ owb_ret_t owb_init(OneWireBus *bus);
  * @param[out] is_present set to true if at least one device is present on the bus
  * @return status
  */    
-owb_ret_t owb_reset(OneWireBus *bus, bool *result);
+owb_ret_t owb_reset(OneWireBus *bus, bool *is_present);
 
 /**
  * @brief Write a bit to the 1-Wire bus.
  * @param[in] bus Pointer to initialised bus instance.
- * @param[in] bit Value to write (lsb only).
+ * @param[in] val biit value to write (lsb only).
  * @return status
  */
 owb_ret_t owb_write_bit( OneWireBus *bus, uint8_t val);
@@ -158,7 +157,7 @@ owb_ret_t owb_write_bit( OneWireBus *bus, uint8_t val);
 /**
  * @brief Write a single byte to the 1-Wire bus.
  * @param[in] bus Pointer to initialised bus instance.
- * @param[in] data Byte value to write to bus.
+ * @param[in] val Byte value to write to bus.
  * @return status
  */
 owb_ret_t owb_write_byte( OneWireBus *bus, uint8_t val);
@@ -167,7 +166,7 @@ owb_ret_t owb_write_byte( OneWireBus *bus, uint8_t val);
  * @brief Write a number of bytes to the 1-Wire bus.
  * @param[in] bus Pointer to initialised bus instance.
  * @param[in] buffer Pointer to buffer to write data from.
- * @param[in] len Number of bytes to write.
+ * @param[in] length Number of bytes to write.
  * @return status
  */
 owb_ret_t owb_write_bytes( OneWireBus *bus, uint8_t *buffer, uint32_t length);
@@ -175,7 +174,7 @@ owb_ret_t owb_write_bytes( OneWireBus *bus, uint8_t *buffer, uint32_t length);
 /**
  * @brief Read a single bit from the 1-Wire bus.
  * @param[in] bus Pointer to initialised bus instance.
- * @param[out] out The bit value read from the bus.
+ * @param[out] bit The bit value read from the bus.
  * @return status
  */
 owb_ret_t owb_read_bit( OneWireBus *bus, uint8_t *bit);
@@ -183,7 +182,7 @@ owb_ret_t owb_read_bit( OneWireBus *bus, uint8_t *bit);
 /**
  * @brief Read a single byte from the 1-Wire bus.
  * @param[in] bus Pointer to initialised bus instance.
- * @param[out] out The byte value read from the bus (lsb only).
+ * @param[out] byte The byte value read from the bus (lsb only).
  * @return status
  */
 owb_ret_t owb_read_byte( OneWireBus *bus, uint8_t *byte);
@@ -192,7 +191,7 @@ owb_ret_t owb_read_byte( OneWireBus *bus, uint8_t *byte);
  * @brief Read a number of bytes from the 1-Wire bus.
  * @param[in] bus Pointer to initialised bus instance.
  * @param[in, out] buffer Pointer to buffer to receive read data.
- * @param[in] len Number of bytes to read, must not exceed length of receive buffer.
+ * @param[in] length Number of bytes to read, must not exceed length of receive buffer.
  * @return status.
  */
 owb_ret_t owb_read_bytes( OneWireBus *bus, uint8_t *buffer, uint32_t length);
@@ -257,10 +256,10 @@ owb_ret_t owb_verify_rom(OneWireBus * bus, OneWireBus_ROMCode *rom_code, bool * 
 /**
  * @brief Write a ROM code to the 1-Wire bus ensuring LSB is sent first.
  * @param[in] bus Pointer to initialised bus instance.
- * @param[in] rom_code ROM code to write to bus.
+ * @param[in] rom_code Pointer to the ROM code to write to bus.
  * @return status
  */
-owb_ret_t owb_write_rom_code(OneWireBus * bus, OneWireBus_ROMCode *rom_code);
+owb_ret_t owb_write_rom_code(OneWireBus *bus, OneWireBus_ROMCode *rom_code);
 
 /**
  * @brief Create a string representation of a ROM code, most significant byte (CRC8) first.
